@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.widget.Button;
 import android.widget.Toast;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.ultra.experimental.R;
 import com.ultra.experimental.Utils.O;
 
@@ -18,59 +20,28 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
 	{
-	private static int i=0;
-	private Receiver receiver= new Receiver();
-
-	private class Receiver extends BroadcastReceiver
-		{
-		@Override
-		public void onReceive(Context context,Intent intent)
-			{
-			String msg= "Получено "+ intent.getIntExtra(O.mapKeys.extra.BROADCAST_STATIC_INT,-1);
-			Toast.makeText(context,msg,Toast.LENGTH_SHORT).show();
-			}
-		}
-
-	public void sendSMS(String number,String msg)
-		{
-		SmsManager smsManager= SmsManager.getDefault();
-		Intent intentDelivery= new Intent(O.ACTION);
-		intentDelivery.putExtra(O.mapKeys.extra.BROADCAST_STATIC_INT,i++);
-		Intent intentSent= new Intent(O.ACTION);
-		intentSent.putExtra(O.mapKeys.extra.BROADCAST_STATIC_INT,i++);
-		PendingIntent pendingIntentDelivery= PendingIntent.getBroadcast(this,0,intentDelivery,0);
-		PendingIntent pendingIntentSent= PendingIntent.getBroadcast(this,0,intentSent,0);
-//		smsManager.sendTextMessage(number,null,msg,pendingIntentSent,pendingIntentDelivery);
-
-		ArrayList<String> parts = smsManager.divideMessage(msg);
-		ArrayList<PendingIntent> delivery= new ArrayList<>();
-		delivery.add(pendingIntentDelivery);
-		ArrayList<PendingIntent> sent= new ArrayList<>();
-		sent.add(pendingIntentSent);
-		smsManager.sendMultipartTextMessage(number, null, parts, sent, delivery);
-		}
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 		{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_layout);
 
-		String number="+79180946116";
-		String msg="Длинное длинное длинное длинное длинное длинное длинное длинное длинное длинное длинное длинное длинное" +
-				" длинное длинное длинное длинное длинное длинное длинное сообщение";
-
 		Button btn= findViewById(R.id.btn);
-		btn.setOnClickListener(view -> sendSMS(number,msg) );
-
-		IntentFilter filter= new IntentFilter(O.ACTION);
-		registerReceiver(receiver,filter);
+		btn.setOnClickListener(view -> new IntentIntegrator(this).initiateScan() );
 		}
-
 	@Override
-	protected void onDestroy()
+	protected void onActivityResult(int requestCode,int resultCode,Intent data)
 		{
-		super.onDestroy();
-		unregisterReceiver(receiver);
+		super.onActivityResult(requestCode,resultCode,data);
+		IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+		if(result!=null)
+			{
+			if(result.getContents() == null)
+				Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show();
+			else
+				Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+			}
+		else
+			super.onActivityResult(requestCode, resultCode, data);
 		}
 	}
