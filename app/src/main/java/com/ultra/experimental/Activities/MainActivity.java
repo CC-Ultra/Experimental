@@ -1,53 +1,44 @@
 package com.ultra.experimental.Activities;
 
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.view.View;
+import com.afollestad.easyvideoplayer.EasyVideoCallback;
+import com.afollestad.easyvideoplayer.EasyVideoPlayer;
+import com.ultra.experimental.Utils.O;
+import io.reactivex.Observable;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.location.LocationManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.telephony.SmsManager;
-import android.widget.Button;
-import android.widget.Toast;
+import android.widget.*;
 import com.ultra.experimental.R;
-import com.ultra.experimental.Utils.O;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import org.reactivestreams.Subscriber;
 
-import java.util.ArrayList;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity
 	{
-	private static int i=0;
-	private Receiver receiver= new Receiver();
+	VideoView player;
+	String url= "http://cdndl.zaycev.net/117410/4544980/diskoteka_avariya_-_novogodnyaya_2012_%28zaycev.net%29.mp3";
 
-	private class Receiver extends BroadcastReceiver
+	private void requestAudioUri()
 		{
-		@Override
-		public void onReceive(Context context,Intent intent)
-			{
-			String msg= "Получено "+ intent.getIntExtra(O.mapKeys.extra.BROADCAST_STATIC_INT,-1);
-			Toast.makeText(context,msg,Toast.LENGTH_SHORT).show();
-			}
+		Intent content= new Intent(Intent.ACTION_GET_CONTENT);
+		content.setType("audio/*");
+		startActivityForResult(content,150);
 		}
-
-	public void sendSMS(String number,String msg)
+	private void playInVideoView(Uri uri)
 		{
-		SmsManager smsManager= SmsManager.getDefault();
-		Intent intentDelivery= new Intent(O.ACTION);
-		intentDelivery.putExtra(O.mapKeys.extra.BROADCAST_STATIC_INT,i++);
-		Intent intentSent= new Intent(O.ACTION);
-		intentSent.putExtra(O.mapKeys.extra.BROADCAST_STATIC_INT,i++);
-		PendingIntent pendingIntentDelivery= PendingIntent.getBroadcast(this,0,intentDelivery,0);
-		PendingIntent pendingIntentSent= PendingIntent.getBroadcast(this,0,intentSent,0);
-//		smsManager.sendTextMessage(number,null,msg,pendingIntentSent,pendingIntentDelivery);
-
-		ArrayList<String> parts = smsManager.divideMessage(msg);
-		ArrayList<PendingIntent> delivery= new ArrayList<>();
-		delivery.add(pendingIntentDelivery);
-		ArrayList<PendingIntent> sent= new ArrayList<>();
-		sent.add(pendingIntentSent);
-		smsManager.sendMultipartTextMessage(number, null, parts, sent, delivery);
+		player.setVideoURI(uri);
+		player.setMediaController(new MediaController(this) );
+		player.start();
 		}
 
 	@Override
@@ -56,21 +47,24 @@ public class MainActivity extends AppCompatActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_layout);
 
-		String number="+79180946116";
-		String msg="Длинное длинное длинное длинное длинное длинное длинное длинное длинное длинное длинное длинное длинное" +
-				" длинное длинное длинное длинное длинное длинное длинное сообщение";
+//		EasyVideoPlayer player=findViewById(R.id.video);
+		player= findViewById(R.id.video);
+//		player.setCallback(new Callback() );
+//		player.setSource(Uri.parse(url) );
 
 		Button btn= findViewById(R.id.btn);
-		btn.setOnClickListener(view -> sendSMS(number,msg) );
-
-		IntentFilter filter= new IntentFilter(O.ACTION);
-		registerReceiver(receiver,filter);
+		btn.setOnClickListener(v ->
+				{
+				v.setVisibility(View.INVISIBLE);
+				playInVideoView(Uri.parse(url) );
+//				requestAudioUri();
+				} );
 		}
 
 	@Override
-	protected void onDestroy()
+	protected void onActivityResult(int requestCode,int resultCode,Intent data)
 		{
-		super.onDestroy();
-		unregisterReceiver(receiver);
+		if(requestCode==150 && data!=null)
+			playInVideoView(data.getData() );
 		}
 	}

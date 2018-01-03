@@ -22,11 +22,18 @@ android {
     }
 }
 
+def rxJava_version = "2.1.0"
+def rxAndroid_version = "2.0.1"
+
 repositories {
+    maven { url 'https://dl.bintray.com/drummer-aidan/maven' }
     jcenter()
 }
 
 dependencies {
+    compile "io.reactivex.rxjava2:rxandroid:${rxAndroid_version}"
+    compile "io.reactivex.rxjava2:rxjava:${rxJava_version}"
+    compile 'com.afollestad:easyvideoplayer:0.3.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:26.1.0'
     compile 'com.journeyapps:zxing-android-embedded:3.5.0'
